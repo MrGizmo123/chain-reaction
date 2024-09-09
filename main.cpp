@@ -9,37 +9,76 @@
 #include <SFML/Window/VideoMode.hpp>
 #include <iostream>
 #include <SFML/Graphics.hpp>
+#include <vector>
+
+#define WIDTH 480
+#define HEIGHT 1000
 
 using namespace std;
 using namespace sf;
 
 class Grid
 {
+    Vector2i padding;
     Vector2i size;
+    Vector2i screen_size;
     float stroke_width;
     Color color;
-
+    vector<RectangleShape> lines;
+    
 public:
-    Grid(Vector2i _size=Vector2i(10,30), float _stroke_width=1, Color _color=Color::Red)
+    Grid(Vector2i _size              =  Vector2i(7,15),
+	 Vector2i _screen_size       =  Vector2i(WIDTH, HEIGHT),
+	 Vector2i _padding           =  Vector2i(10, 10),
+	 float _stroke_width         =  1,
+	 Color _color                =  Color::Red)
+	
 	: size(_size),
+	  screen_size(_screen_size),
+	  padding(_padding),
 	  stroke_width(_stroke_width),
 	  color(_color)
-	{}
+	  
+    {
+	float x_inc = (int)(screen_size.x - 2*padding.x) / (float)size.x;
+	float y_inc = (int)(screen_size.y - 2*padding.y) / (float)size.y;
+	    
+	for (int i = 0; i <= _size.x; i++)
+	{
+	    RectangleShape line(Vector2f(stroke_width, screen_size.y - 2*padding.y));
+	    line.move(Vector2f(padding.x + x_inc * i, padding.y));
+	    lines.push_back(line);
+	}
+
+	for (int i = 0; i <= _size.y; i++)
+	{
+	    RectangleShape line(Vector2f(screen_size.x - 2*padding.x, stroke_width));
+	    line.move(Vector2f(padding.x, padding.y + y_inc * i));
+	    lines.push_back(line);
+	}
+    }
+
+    void render(RenderWindow& win)
+    {
+	for (RectangleShape& line : lines)
+	{
+	    line.setFillColor(color);
+	    win.draw(line);
+	}
+    }
+
+    void setColor(Color c)
+    {
+	color = c;
+    }
     
 };
 
 int main()
 {
-    RenderWindow window(VideoMode(480, 1000), "Test Window");
+    RenderWindow window(VideoMode(WIDTH, HEIGHT), "Test Window");
 
-    CircleShape circle(75.0f);
-
-    RectangleShape line(Vector2f(10, 100));
-
-    line.rotate(-45);
-    line.move(Vector2f(100,100));
-
-    circle.setFillColor(Color::Blue);
+    Grid g;
 
     while (window.isOpen())
     {
@@ -54,8 +93,7 @@ int main()
 	}
 
 	window.clear();
-	window.draw(circle);
-	window.draw(line);
+	g.render(window);
 	window.display();
     }
 
