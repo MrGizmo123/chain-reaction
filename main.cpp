@@ -10,6 +10,7 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include <vector>
+#include <cmath>
 
 #define WIDTH 480
 #define HEIGHT 1000
@@ -21,6 +22,7 @@ class Grid
 {
     Vector2i padding;
     Vector2i size;
+    Vector2f cell_size;
     Vector2i screen_size;
     float stroke_width;
     Color color;
@@ -42,6 +44,9 @@ public:
     {
 	float x_inc = (int)(screen_size.x - 2*padding.x) / (float)size.x;
 	float y_inc = (int)(screen_size.y - 2*padding.y) / (float)size.y;
+
+	cell_size.x = x_inc;
+	cell_size.y = y_inc;
 	    
 	for (int i = 0; i <= _size.x; i++)
 	{
@@ -67,6 +72,14 @@ public:
 	}
     }
 
+    Vector2i getGridCoord(Vector2i pos)
+    {
+	int x = floor((pos.x - padding.x) / cell_size.x);
+	int y = floor((pos.y - padding.y) / cell_size.y);
+
+	return Vector2i(x, y);
+    }
+
     void setColor(Color c)
     {
 	color = c;
@@ -74,23 +87,59 @@ public:
     
 };
 
+bool color = true;
+Grid g;
+
+void mouse_clicked(Vector2i pos)
+{
+    cout << pos.x  << ", " << pos.y << endl;
+    if (color)
+    {
+	g.setColor(Color::Red);
+    }
+    else
+    {
+	g.setColor(Color::Green);
+    }
+    color = !color;
+}
+
+void check_events(RenderWindow& window, bool& mouse_down)
+{
+    Event ev;
+    
+    while (window.pollEvent(ev))
+    {
+	if (ev.type == Event::Closed)
+	{
+	    window.close();
+	}
+
+	if (ev.type == Event::MouseButtonPressed && ev.mouseButton.button == Mouse::Left && !mouse_down)
+	{
+	    // mouse clicked
+
+	    mouse_down = true;
+
+	    mouse_clicked(Mouse::getPosition(window));
+	}
+
+	if (ev.type == Event::MouseButtonReleased && ev.mouseButton.button == Mouse::Left && mouse_down)
+	{
+	    mouse_down = false;
+	}
+    }
+}
+
 int main()
 {
-    RenderWindow window(VideoMode(WIDTH, HEIGHT), "Test Window");
-
-    Grid g;
+    RenderWindow window(VideoMode(WIDTH, HEIGHT), "Chain Reaction");
+    
+    bool mouse_down = false;
 
     while (window.isOpen())
     {
-	Event ev;
-
-	while (window.pollEvent(ev))
-	{
-	    if (ev.type == Event::Closed)
-	    {
-		window.close();
-	    }
-	}
+	check_events(window, mouse_down);
 
 	window.clear();
 	g.render(window);
